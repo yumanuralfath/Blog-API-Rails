@@ -1,41 +1,28 @@
-# Gunakan image dasar Alpine
-FROM ruby:3.3.0-alpine
+# Gunakan image Ruby Alpine sebagai base image
+FROM ruby:alpine
 
-# Install dependencies yang diperlukan
+# Install dependencies
 RUN apk update && \
     apk add --no-cache \
-    build-base \
-    tzdata \
-    nodejs \
-    yarn \
-    git \
-    bash \
-    curl
+      build-base \
+      nodejs \
+      yarn \
+      tzdata
 
-# Install bundler
-RUN gem install bundler
-
-# Atur direktori kerja
+# Set working directory
 WORKDIR /app
 
-# Salin file Gemfile dan Gemfile.lock ke dalam direktori kerja
+# Copy Gemfile dan Gemfile.lock ke dalam image
 COPY Gemfile Gemfile.lock ./
 
 # Install gems
-RUN bundle install
+RUN gem install bundler && bundle install --binstubs
 
-# Salin seluruh kode aplikasi ke dalam direktori kerja
+# Copy seluruh kode ke dalam image
 COPY . .
 
-# Precompile assets untuk production
-RUN RAILS_ENV=production SECRET_KEY_BASE=$(rake secret) bundle exec rake assets:precompile
-
-# Expose port yang digunakan oleh aplikasi Rails (misalnya port 3000)
+# Expose port 3000 untuk server
 EXPOSE 3000
 
-# Set environment variables
-ENV RAILS_ENV=production
-ENV RACK_ENV=production
-
-# Command untuk menjalankan server puma
-CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]
+# Command untuk menjalankan server
+CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0"]
